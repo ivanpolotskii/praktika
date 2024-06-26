@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">Новости</h1>
+        <h1 class="mb-4">Скачивание сообщений с новостного сайта RB.ru</h1>
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -22,6 +22,72 @@
             </tbody>
         </table>
     </div>
-    <script src="main.js"></script>
+    <button id="download-json" disabled>Скачать новости в формате JSON</button>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const url = 'https://rb.ru';
+        let newsData = [];
+
+        fetch(url)
+            .then(response => response.text())
+            .then(data => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const newsItems = doc.querySelectorAll('.news-block__item');
+                const newsTable = document.getElementById('news-table');
+
+                newsItems.forEach(item => {
+                    const time = item.querySelector('.news-block__item-time').innerText.trim();
+                    const title = item.querySelector('.news-block__item-title a').innerText.trim();
+                    const relativeLink = item.querySelector('.news-block__item-title a').getAttribute('href');
+                    const fullLink = new URL(relativeLink, url).href;
+
+                    const row = document.createElement('tr');
+
+                    const timeCell = document.createElement('td');
+                    timeCell.textContent = time;
+                    row.appendChild(timeCell);
+
+                    const titleCell = document.createElement('td');
+                    titleCell.textContent = title;
+                    row.appendChild(titleCell);
+
+                    const linkCell = document.createElement('td');
+                    const linkElement = document.createElement('a');
+                    linkElement.href = fullLink;
+                    linkElement.target = '_blank';
+                    linkElement.textContent = 'Читать далее';
+                    linkCell.appendChild(linkElement);
+                    row.appendChild(linkCell);
+
+                    newsTable.appendChild(row);
+
+                    // Добавляем новость в массив данных
+                    newsData.push({ time, title, fullLink });
+                });
+
+                // Активируем кнопку скачивания после загрузки и парсинга данных
+                document.getElementById('download-json').disabled = false;
+            })
+            .catch(error => console.error('Ошибка при загрузке данных:', error));
+
+        document.getElementById('download-json').addEventListener('click', function() {
+            if (newsData.length === 0) {
+                alert('Нет данных для скачивания');
+                return;
+            }
+
+            const json = JSON.stringify(newsData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'news.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    });
+    </script>
 </body>
 </html>
