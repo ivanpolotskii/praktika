@@ -8,8 +8,18 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">Скачивание сообщений с новостного сайта RB.ru</h1>
-        <table class="table table-bordered">
+        <h1 class="mb-4">Скачивание сообщений с новостных сайтов</h1>
+        <div class="form-group">
+            <label for="site-select">Выберите сайт:</label>
+            <select id="site-select" class="form-control">
+                <option value="https://rb.ru">RB.ru</option>
+                <option value="https://lenta.ru">Lenta.ru</option>
+                <option value="https://www.vesti.ru">Vesti.ru</option>
+                <option value="https://iz.ru">Iz.ru</option>
+            </select>
+        </div>
+        <button id="load-news" class="btn btn-primary">Загрузить новости</button>
+        <table class="table table-bordered mt-4">
             <thead>
                 <tr>
                     <th>Время</th>
@@ -21,73 +31,9 @@
                 <!-- Новости будут добавляться сюда -->
             </tbody>
         </table>
+        <button id="download-json" class="btn btn-success" disabled>Скачать новости в формате JSON</button>
     </div>
-    <button id="download-json" disabled>Скачать новости в формате JSON</button>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const url = 'https://rb.ru';
-        let newsData = [];
-
-        fetch(url)
-            .then(response => response.text())
-            .then(data => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(data, 'text/html');
-                const newsItems = doc.querySelectorAll('.news-block__item');
-                const newsTable = document.getElementById('news-table');
-
-                newsItems.forEach(item => {
-                    const time = item.querySelector('.news-block__item-time').innerText.trim();
-                    const title = item.querySelector('.news-block__item-title a').innerText.trim();
-                    const relativeLink = item.querySelector('.news-block__item-title a').getAttribute('href');
-                    const fullLink = new URL(relativeLink, url).href;
-
-                    const row = document.createElement('tr');
-
-                    const timeCell = document.createElement('td');
-                    timeCell.textContent = time;
-                    row.appendChild(timeCell);
-
-                    const titleCell = document.createElement('td');
-                    titleCell.textContent = title;
-                    row.appendChild(titleCell);
-
-                    const linkCell = document.createElement('td');
-                    const linkElement = document.createElement('a');
-                    linkElement.href = fullLink;
-                    linkElement.target = '_blank';
-                    linkElement.textContent = 'Читать далее';
-                    linkCell.appendChild(linkElement);
-                    row.appendChild(linkCell);
-
-                    newsTable.appendChild(row);
-
-                    // Добавляем новость в массив данных
-                    newsData.push({ time, title, fullLink });
-                });
-
-                // Активируем кнопку скачивания после загрузки и парсинга данных
-                document.getElementById('download-json').disabled = false;
-            })
-            .catch(error => console.error('Ошибка при загрузке данных:', error));
-
-        document.getElementById('download-json').addEventListener('click', function() {
-            if (newsData.length === 0) {
-                alert('Нет данных для скачивания');
-                return;
-            }
-
-            const json = JSON.stringify(newsData, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'news.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-    });
-    </script>
+    <script src="main.js"></script>
 </body>
 </html>
